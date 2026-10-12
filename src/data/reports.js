@@ -1,0 +1,51 @@
+export const reports = [
+  {
+    id: "rp1",
+    title: "گزارش فروش ماهانه",
+    description: "جمع فروش، تعداد سفارش و میانگین سبد خرید به تفکیک ماه",
+    category: "فروش",
+    updatedAt: "2026-01-07",
+    format: "داشبورد",
+  },
+  {
+    id: "rp2",
+    title: "تحلیل قیف فروش",
+    description: "نرخ تبدیل در هر مرحله از روند پیگیری مشتریان",
+    category: "فروش",
+    updatedAt: "2026-01-06",
+    format: "PDF",
+  },
+  {
+    id: "rp3",
+    title: "گزارش مشتریان فعال",
+    description: "فهرست مشتریان فعال، ارزش طول عمر و آخرین تعامل",
+    category: "مشتریان",
+    updatedAt: "2026-01-05",
+    format: "Excel",
+  },
+  {
+    id: "rp4",
+    title: "گزارش عملکرد تحویل کالا",
+    description: "زمان تحویل، نرخ تاخیر و مرجوعی‌ها",
+    category: "عملیات",
+    updatedAt: "2026-01-04",
+    format: "داشبورد",
+  },
+  {
+    id: "rp5",
+    title: "گزارش تعمیرات",
+    description: "تعداد پرونده‌ها، میانگین زمان تعمیر و هزینه‌ها",
+    category: "عملیات",
+    updatedAt: "2026-01-03",
+    format: "PDF",
+  },
+  {
+    id: "rp6",
+    title: "گزارش رضایت مشتریان",
+    description: "امتیاز رضایت، نرخ پاسخ‌دهی و زمان رسیدگی تیکت‌ها",
+    category: "پشتیبانی",
+    updatedAt: "2026-01-02",
+    format: "داشبورد",
+  },
+];
+export const reportCategories = ["فروش", "مشتریان", "عملیات", "پشتیبانی"];

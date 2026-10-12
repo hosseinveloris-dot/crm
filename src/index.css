@@ -1,0 +1,162 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Surfaces */
+    --background: 200 60% 98%;
+    --surface: 0 0% 100%;
+    --surface-foreground: 205 70% 12%;
+
+    /* Text & lines */
+    --foreground: 205 70% 12%;
+    --border: 204 30% 91%;
+    --input: 204 30% 88%;
+    --ring: 186 85% 34%;
+
+    /* Brand — teal accent sampled from the reference */
+    --brand: 186 85% 32%;
+    --brand-foreground: 0 0% 100%;
+    --brand-soft: 186 70% 95%;
+
+    /* Sidebar — deep navy sampled from the reference */
+    --sidebar: 204 78% 13%;
+    --sidebar-foreground: 200 60% 96%;
+    --sidebar-muted: 203 28% 68%;
+    --sidebar-active: 186 85% 38%;
+
+    /* Semantic */
+    --success: 160 84% 39%;
+    --warning: 38 92% 50%;
+    --danger: 0 72% 55%;
+    --info: 199 89% 48%;
+
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 205 45% 8%;
+    --surface: 205 40% 12%;
+    --surface-foreground: 200 40% 96%;
+
+    --foreground: 200 40% 96%;
+    --border: 205 30% 22%;
+    --input: 205 30% 22%;
+    --ring: 186 85% 45%;
+
+    --brand: 186 85% 42%;
+    --brand-foreground: 0 0% 100%;
+    --brand-soft: 186 50% 18%;
+
+    --sidebar: 205 50% 9%;
+    --sidebar-foreground: 200 40% 96%;
+    --sidebar-muted: 203 25% 62%;
+    --sidebar-active: 186 85% 42%;
+  }
+
+  * {
+    @apply border-border;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "ss01" on;
+    overscroll-behavior-y: none;
+  }
+
+  /* Persian digits helper — applied on <html data-digits="fa"> */
+  [data-digits="fa"] .tabular-nums,
+  .num {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-lg border border-border bg-surface shadow-card;
+  }
+
+  .input-base {
+    @apply h-10 w-full rounded-md border border-input bg-surface px-3 text-sm
+           outline-none transition placeholder:text-slate-400
+           focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:opacity-60;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--border));
+    border-radius: 9999px;
+  }
+}
+
+@keyframes overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@layer utilities {
+  .animate-overlay-in {
+    animation: overlay-in 140ms ease-out;
+  }
+
+  .animate-dialog-in {
+    animation: dialog-in 180ms ease-out;
+  }
+
+  .animate-toast-in {
+    animation: toast-in 160ms ease-out;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-overlay-in,
+  .animate-dialog-in,
+  .animate-toast-in {
+    animation: none;
+  }
+}
