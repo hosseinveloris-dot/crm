@@ -50,9 +50,9 @@ export const salesTrend = [
   { month: "اسفند", sales: 95, leads: 68 },
 ];
 export const channelMix = [
-  { label: "کوره", value: 42, tone: "#0E9AA7" },
-  { label: "سیستم جمع‌آوری", value: 33, tone: "#06253A" },
-  { label: "باسکول", value: 25, tone: "#4BADB8" },
+  { label: "کوره", value: 42, tone: "bg-brand" },
+  { label: "سیستم جمع‌آوری", value: 33, tone: "bg-foreground" },
+  { label: "باسکول", value: 25, tone: "bg-brand/55" },
 ];
 export const activities = [
   {

@@ -7,8 +7,8 @@ import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Field, Input, Select, Textarea } from "@/components/ui/Field";
 import { useToast } from "@/components/ui/Toast";
 import { CITIES, CUSTOMER_SOURCES, SALES_OWNERS } from "@/data/reference";
-import { todayIso } from "@/lib/format";
-import { cn, nextCode } from "@/lib/utils";
+import { todayIso, toFaDigits } from "@/lib/format";
+import { clampNumber, cn, digitsOnly, nextCode } from "@/lib/utils";
 import { useData } from "@/store/DataProvider";
 const INITIAL = {
   type: "حقیقی",
@@ -24,16 +24,38 @@ const INITIAL = {
   owner: SALES_OWNERS[0],
   note: "",
 };
+const PHONE_LENGTH = 11;
+const NATIONAL_ID_LENGTH = 10;
 export function CustomerForm() {
   const { customers, addCustomer } = useData();
   const toast = useToast();
   const [form, setForm] = useState(INITIAL);
   const [submitted, setSubmitted] = useState(false);
+  const [errors, setErrors] = useState({});
   const update = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
   const isLegal = form.type === "حقوقی";
+  const validate = () => {
+    const next = {};
+    if (!form.fullName.trim()) next.fullName = "نام را وارد کنید.";
+    if (form.phone.length !== PHONE_LENGTH) {
+      next.phone = `شماره همراه باید ${toFaDigits(PHONE_LENGTH)} رقم باشد.`;
+    }
+    if (form.landline && form.landline.length !== PHONE_LENGTH) {
+      next.landline = `شماره ثابت باید ${toFaDigits(PHONE_LENGTH)} رقم باشد.`;
+    }
+    if (form.nationalId && form.nationalId.length !== NATIONAL_ID_LENGTH) {
+      next.nationalId = `${isLegal ? "شناسه ملی" : "کد ملی"} باید ${toFaDigits(NATIONAL_ID_LENGTH)} رقم باشد.`;
+    }
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  };
   const handleSubmit = (event) => {
     event.preventDefault();
     if (submitted) return;
+    if (!validate()) {
+      toast.push("لطفاً خطاهای فرم را برطرف کنید.", "error");
+      return;
+    }
     addCustomer({
       code: nextCode(
         "CUS",
@@ -59,7 +81,7 @@ export function CustomerForm() {
         actions={
           <Link
             to="/customers"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-brand"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-brand"
           >
             <ArrowRight className="size-4" />
             بازگشت به فهرست مشتریان
@@ -67,7 +89,7 @@ export function CustomerForm() {
         }
       />
       {submitted && (
-        <div className="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+        <div className="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-300">
           <CheckCircle2 className="size-5 shrink-0" />
           اطلاعات مشتری «{form.fullName || "بدون نام"}» با موفقیت ثبت شد.
         </div>
@@ -85,7 +107,11 @@ export function CustomerForm() {
                   <option value="حقوقی">حقوقی</option>
                 </Select>
               </Field>
-              <Field label={isLegal ? "نام مدیرعامل / رابط" : "نام و نام خانوادگی"} required>
+              <Field
+                label={isLegal ? "نام مدیرعامل / رابط" : "نام و نام خانوادگی"}
+                required
+                error={errors.fullName}
+              >
                 <Input
                   value={form.fullName}
                   onChange={(e) => update("fullName", e.target.value)}
@@ -102,11 +128,15 @@ export function CustomerForm() {
                   />
                 </Field>
               )}
-              <Field label={isLegal ? "شناسه ملی" : "کد ملی"}>
+              <Field label={isLegal ? "شناسه ملی" : "کد ملی"} error={errors.nationalId}>
                 <Input
                   value={form.nationalId}
-                  onChange={(e) => update("nationalId", e.target.value)}
+                  onChange={(e) =>
+                    update("nationalId", digitsOnly(e.target.value, NATIONAL_ID_LENGTH))
+                  }
                   placeholder="۱۰ رقم"
+                  inputMode="numeric"
+                  maxLength={NATIONAL_ID_LENGTH}
                 />
               </Field>
             </CardBody>
@@ -116,19 +146,23 @@ export function CustomerForm() {
               <CardTitle>اطلاعات تماس</CardTitle>
             </CardHeader>
             <CardBody className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="تلفن همراه" required>
+              <Field label="تلفن همراه" required error={errors.phone}>
                 <Input
                   value={form.phone}
-                  onChange={(e) => update("phone", e.target.value)}
+                  onChange={(e) => update("phone", digitsOnly(e.target.value, PHONE_LENGTH))}
                   placeholder="۰۹۱۲۳۴۵۶۷۸۹"
+                  inputMode="numeric"
+                  maxLength={PHONE_LENGTH}
                   required
                 />
               </Field>
-              <Field label="تلفن ثابت">
+              <Field label="تلفن ثابت" error={errors.landline}>
                 <Input
                   value={form.landline}
-                  onChange={(e) => update("landline", e.target.value)}
+                  onChange={(e) => update("landline", digitsOnly(e.target.value, PHONE_LENGTH))}
                   placeholder="۰۲۱۸۸۸۸۸۸۸۸"
+                  inputMode="numeric"
+                  maxLength={PHONE_LENGTH}
                 />
               </Field>
               <Field label="ایمیل">
@@ -201,6 +235,7 @@ export function CustomerForm() {
               className="w-full sm:w-auto"
               onClick={() => {
                 setForm(INITIAL);
+                setErrors({});
                 setSubmitted(false);
               }}
             >
@@ -215,7 +250,7 @@ export function CustomerForm() {
                 <Info className="size-4" />
                 <h3 className="text-sm font-semibold">راهنمای ثبت</h3>
               </div>
-              <ul className="space-y-3 text-xs leading-relaxed text-slate-500">
+              <ul className="space-y-3 text-xs leading-relaxed text-muted-foreground">
                 {[
                   "برای مشتریان حقوقی، وارد کردن نام شرکت و شناسه ملی الزامی است.",
                   "شماره تماس همراه به‌عنوان شناسه اصلی مشتری استفاده می‌شود.",
@@ -232,7 +267,7 @@ export function CustomerForm() {
           </Card>
           <Card>
             <CardBody className="space-y-2">
-              <p className="text-xs text-slate-400">خلاصه اطلاعات وارد‌شده</p>
+              <p className="text-xs text-faint">خلاصه اطلاعات وارد‌شده</p>
               <dl className="space-y-2 text-sm">
                 <SummaryRow label="نوع" value={form.type} />
                 <SummaryRow label="نام" value={form.fullName || "—"} />
@@ -251,8 +286,8 @@ export function CustomerForm() {
 function SummaryRow({ label, value }) {
   return (
     <div className="flex items-center justify-between gap-3 border-b border-border pb-2 last:border-0 last:pb-0">
-      <dt className="text-xs text-slate-400">{label}</dt>
-      <dd className="truncate text-xs font-medium text-slate-700">{value}</dd>
+      <dt className="text-xs text-faint">{label}</dt>
+      <dd className="truncate text-xs font-medium text-foreground">{value}</dd>
     </div>
   );
 }

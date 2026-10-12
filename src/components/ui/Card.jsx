@@ -14,10 +14,10 @@ export function CardHeader({ className, ...props }) {
   );
 }
 export function CardTitle({ className, ...props }) {
-  return <h3 className={cn("text-sm font-semibold text-slate-800", className)} {...props} />;
+  return <h3 className={cn("text-sm font-semibold text-foreground", className)} {...props} />;
 }
 export function CardDescription({ className, ...props }) {
-  return <p className={cn("mt-1 text-xs text-slate-500", className)} {...props} />;
+  return <p className={cn("mt-1 text-xs text-muted-foreground", className)} {...props} />;
 }
 export function CardBody({ className, ...props }) {
   return <div className={cn("p-4 sm:p-5", className)} {...props} />;

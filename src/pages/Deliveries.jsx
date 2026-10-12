@@ -1,5 +1,5 @@
 import { useCallback, useId, useMemo, useState } from "react";
-import { Download, Plus } from "lucide-react";
+import { Download, Pencil, Plus } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { PageHeader, SearchInput } from "@/components/shared/PageHeader";
@@ -8,13 +8,23 @@ import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { StatusBadge } from "@/components/shared/Widgets";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/Tabs";
-import { COL_HIDE_LG, COL_HIDE_MD, TD, TBody, TH, THead, TR, Table } from "@/components/ui/Table";
+import {
+  COL_HIDE_LG,
+  COL_HIDE_MD,
+  EditButton,
+  TD,
+  TBody,
+  TH,
+  THead,
+  TR,
+  Table,
+} from "@/components/ui/Table";
 import { useFilter } from "@/hooks/useFilter";
 import { useData } from "@/store/DataProvider";
 import { CARRIERS, PRODUCTS, PRODUCT_UNITS } from "@/data/reference";
 import { downloadCsv } from "@/lib/csv";
 import { formatFaDate, formatFaNumber, todayIso } from "@/lib/format";
-import { nextCode } from "@/lib/utils";
+import { clampNumber, nextCode } from "@/lib/utils";
 const STATUS_TABS = ["همه", "در حال آماده‌سازی", "آماده ارسال", "در مسیر", "تحویل شده", "مرجوع"];
 const STATUSES = ["در حال آماده‌سازی", "آماده ارسال", "در مسیر", "تحویل شده", "مرجوع"];
 const EXPORT_HEADER = ["کد سفارش", "مشتری", "کالا", "مقدار", "واحد", "وضعیت", "حامل", "تاریخ"];
@@ -24,6 +34,7 @@ export function Deliveries() {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("همه");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState(null);
   const byStatus = useMemo(
     () => (status === "همه" ? deliveries : deliveries.filter((d) => d.status === status)),
     [deliveries, status],
@@ -58,7 +69,12 @@ export function Deliveries() {
               <Download className="size-4" />
               خروجی اکسل
             </Button>
-            <Button onClick={() => setDialogOpen(true)}>
+            <Button
+              onClick={() => {
+                setEditing(null);
+                setDialogOpen(true);
+              }}
+            >
               <Plus className="size-4" />
               سفارش جدید
             </Button>
@@ -95,68 +111,90 @@ export function Deliveries() {
               <TH>وضعیت</TH>
               <TH className={COL_HIDE_LG}>حامل</TH>
               <TH className={COL_HIDE_MD}>تاریخ</TH>
+              <TH className="w-12">عملیات</TH>
             </TR>
           </THead>
           <TBody>
             {rows.map((item) => (
               <TR key={item.id}>
-                <TD className="font-medium text-slate-800">{item.orderCode}</TD>
-                <TD className="text-slate-700">{item.customer}</TD>
-                <TD className={`text-slate-500 ${COL_HIDE_MD}`}>{item.product}</TD>
-                <TD className="text-slate-500">
+                <TD className="font-medium text-foreground">{item.orderCode}</TD>
+                <TD className="text-foreground">{item.customer}</TD>
+                <TD className={`text-muted-foreground ${COL_HIDE_MD}`}>{item.product}</TD>
+                <TD className="text-muted-foreground">
                   {formatFaNumber(item.quantity)} {item.unit}
                 </TD>
                 <TD>
                   <StatusBadge status={item.status} />
                 </TD>
-                <TD className={`text-slate-500 ${COL_HIDE_LG}`}>{item.carrier}</TD>
-                <TD className={`text-slate-500 ${COL_HIDE_MD}`}>{formatFaDate(item.date)}</TD>
+                <TD className={`text-muted-foreground ${COL_HIDE_LG}`}>{item.carrier}</TD>
+                <TD className={`text-muted-foreground ${COL_HIDE_MD}`}>
+                  {formatFaDate(item.date)}
+                </TD>
+                <TD>
+                  <EditButton
+                    onClick={() => {
+                      setEditing(item);
+                      setDialogOpen(true);
+                    }}
+                  />
+                </TD>
               </TR>
             ))}
           </TBody>
         </Table>
         {rows.length === 0 && (
-          <p className="py-12 text-center text-sm text-slate-400">سفارشی یافت نشد.</p>
+          <p className="py-12 text-center text-sm text-faint">سفارشی یافت نشد.</p>
         )}
       </Card>
-      {dialogOpen && <NewDeliveryDialog onClose={() => setDialogOpen(false)} />}
+      {dialogOpen && <DeliveryDialog record={editing} onClose={() => setDialogOpen(false)} />}
     </>
   );
 }
-function NewDeliveryDialog({ onClose }) {
-  const { deliveries, addDelivery } = useData();
+function DeliveryDialog({ record, onClose }) {
+  const { deliveries, addDelivery, updateDelivery } = useData();
   const toast = useToast();
   const formId = useId();
-  const [draft, setDraft] = useState(() => ({
-    orderCode: nextCode(
-      "ORD",
-      deliveries.map((d) => d.orderCode),
-    ),
-    customer: "",
-    product: PRODUCTS[0],
-    quantity: 1,
-    unit: PRODUCT_UNITS[0],
-    status: "در حال آماده‌سازی",
-    carrier: CARRIERS[0],
-    date: todayIso(),
-    address: "",
-  }));
+  const editing = Boolean(record);
+  const [draft, setDraft] = useState(() =>
+    record
+      ? { ...record }
+      : {
+          orderCode: nextCode(
+            "ORD",
+            deliveries.map((d) => d.orderCode),
+          ),
+          customer: "",
+          product: PRODUCTS[0],
+          quantity: 1,
+          unit: PRODUCT_UNITS[0],
+          status: "در حال آماده‌سازی",
+          carrier: CARRIERS[0],
+          date: todayIso(),
+          address: "",
+        },
+  );
   const update = (key, value) => setDraft((prev) => ({ ...prev, [key]: value }));
   const handleSubmit = (event) => {
     event.preventDefault();
-    addDelivery({ ...draft, quantity: Math.max(0, draft.quantity) });
-    toast.push(`سفارش ${draft.orderCode} ثبت شد.`);
+    const payload = { ...draft, quantity: Math.max(0, draft.quantity) };
+    if (editing) {
+      updateDelivery(record.id, payload);
+      toast.push(`سفارش ${draft.orderCode} بروزرسانی شد.`);
+    } else {
+      addDelivery(payload);
+      toast.push(`سفارش ${draft.orderCode} ثبت شد.`);
+    }
     onClose();
   };
   return (
     <Modal
-      title="سفارش جدید"
-      description="ثبت سفارش و تعیین وضعیت تحویل"
+      title={editing ? "ویرایش سفارش" : "سفارش جدید"}
+      description={editing ? "وضعیت و جزئیات سفارش را تغییر دهید" : "ثبت سفارش و تعیین وضعیت تحویل"}
       onClose={onClose}
       footer={
         <>
           <Button type="submit" form={formId}>
-            ثبت سفارش
+            {editing ? "ذخیره تغییرات" : "ثبت سفارش"}
           </Button>
           <Button type="button" variant="ghost" onClick={onClose}>
             انصراف
@@ -170,7 +208,7 @@ function NewDeliveryDialog({ onClose }) {
             readOnly
             dir="ltr"
             value={draft.orderCode}
-            className="bg-slate-50 text-slate-500"
+            className="bg-muted text-muted-foreground"
           />
         </Field>
         <Field label="مشتری" required>
@@ -206,7 +244,7 @@ function NewDeliveryDialog({ onClose }) {
             type="number"
             min={0}
             value={draft.quantity}
-            onChange={(event) => update("quantity", Number(event.target.value))}
+            onChange={(event) => update("quantity", clampNumber(event.target.value, 0, 999999))}
           />
         </Field>
         <Field label="واحد">

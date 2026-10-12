@@ -29,6 +29,12 @@ export function DataProvider({ children }) {
       [key]: [{ ...draft, id: uid(key) }, ...prev[key]],
     }));
   }, []);
+  const update = useCallback((key, id, patch) => {
+    setData((prev) => ({
+      ...prev,
+      [key]: prev[key].map((item) => (item.id === id ? { ...item, ...patch } : item)),
+    }));
+  }, []);
   const value = useMemo(
     () => ({
       ...data,
@@ -38,8 +44,13 @@ export function DataProvider({ children }) {
       addRepair: (draft) => prepend("repairs", draft),
       addLead: (draft) => prepend("leads", draft),
       addTicket: (draft) => prepend("tickets", draft),
+      updateFollowUp: (id, patch) => update("followUps", id, patch),
+      updateDelivery: (id, patch) => update("deliveries", id, patch),
+      updateRepair: (id, patch) => update("repairs", id, patch),
+      updateLead: (id, patch) => update("leads", id, patch),
+      updateTicket: (id, patch) => update("tickets", id, patch),
     }),
-    [data, prepend],
+    [data, prepend, update],
   );
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
 }

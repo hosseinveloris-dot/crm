@@ -1,5 +1,5 @@
 import { useCallback, useId, useMemo, useState } from "react";
-import { Plus } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { PageHeader, SearchInput } from "@/components/shared/PageHeader";
@@ -8,13 +8,23 @@ import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { StatusBadge } from "@/components/shared/Widgets";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/Tabs";
-import { COL_HIDE_LG, COL_HIDE_MD, TD, TBody, TH, THead, TR, Table } from "@/components/ui/Table";
+import {
+  COL_HIDE_LG,
+  COL_HIDE_MD,
+  EditButton,
+  TD,
+  TBody,
+  TH,
+  THead,
+  TR,
+  Table,
+} from "@/components/ui/Table";
 import { Avatar } from "@/components/ui/Avatar";
 import { useFilter } from "@/hooks/useFilter";
 import { useData } from "@/store/DataProvider";
 import { DEVICES, TECHNICIANS } from "@/data/reference";
 import { formatFaDate, formatToman, todayIso, toFaDigits } from "@/lib/format";
-import { nextCode } from "@/lib/utils";
+import { clampNumber, nextCode } from "@/lib/utils";
 const STATUS_TABS = [
   "همه",
   "در انتظار بررسی",
@@ -30,6 +40,7 @@ export function Repairs() {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("همه");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState(null);
   const byStatus = useMemo(
     () => (status === "همه" ? repairs : repairs.filter((r) => r.status === status)),
     [repairs, status],
@@ -49,7 +60,12 @@ export function Repairs() {
         title="تعمیرات"
         description="مدیریت پرونده‌های تعمیر، تخصیص تکنسین و برآورد هزینه"
         actions={
-          <Button onClick={() => setDialogOpen(true)}>
+          <Button
+            onClick={() => {
+              setEditing(null);
+              setDialogOpen(true);
+            }}
+          >
             <Plus className="size-4" />
             پرونده تعمیر جدید
           </Button>
@@ -57,20 +73,20 @@ export function Repairs() {
       />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card className="p-4 sm:p-5">
-          <p className="text-xs text-slate-500">پرونده‌های باز</p>
-          <p className="mt-2 text-lg font-bold text-slate-800 sm:text-xl">
+          <p className="text-xs text-muted-foreground">پرونده‌های باز</p>
+          <p className="mt-2 text-lg font-bold text-foreground sm:text-xl">
             {toFaDigits(openCases)}
           </p>
         </Card>
         <Card className="p-4 sm:p-5">
-          <p className="text-xs text-slate-500">کل پرونده‌ها</p>
-          <p className="mt-2 text-lg font-bold text-slate-800 sm:text-xl">
+          <p className="text-xs text-muted-foreground">کل پرونده‌ها</p>
+          <p className="mt-2 text-lg font-bold text-foreground sm:text-xl">
             {toFaDigits(repairs.length)}
           </p>
         </Card>
         <Card className="p-4 sm:p-5">
-          <p className="text-xs text-slate-500">برآورد هزینه کل</p>
-          <p className="mt-2 text-lg font-bold text-slate-800 sm:text-xl">
+          <p className="text-xs text-muted-foreground">برآورد هزینه کل</p>
+          <p className="mt-2 text-lg font-bold text-foreground sm:text-xl">
             {formatToman(totalCost)}
           </p>
         </Card>
@@ -107,78 +123,102 @@ export function Repairs() {
               <TH className={COL_HIDE_MD}>اولویت</TH>
               <TH className={COL_HIDE_MD}>تاریخ پذیرش</TH>
               <TH className={COL_HIDE_LG}>برآورد هزینه</TH>
+              <TH className="w-12">عملیات</TH>
             </TR>
           </THead>
           <TBody>
             {rows.map((item) => (
               <TR key={item.id}>
-                <TD className="font-medium text-slate-800">{item.ticketCode}</TD>
+                <TD className="font-medium text-foreground">{item.ticketCode}</TD>
                 <TD>
                   <div className="flex items-center gap-2.5">
                     <Avatar name={item.customer} className="size-8" />
-                    <span className="text-slate-700">{item.customer}</span>
+                    <span className="text-foreground">{item.customer}</span>
                   </div>
                 </TD>
-                <TD className="text-slate-700">{item.device}</TD>
-                <TD className={`text-slate-500 ${COL_HIDE_LG}`}>{item.issue}</TD>
-                <TD className={`text-slate-500 ${COL_HIDE_LG}`}>{item.technician}</TD>
+                <TD className="text-foreground">{item.device}</TD>
+                <TD className={`text-muted-foreground ${COL_HIDE_LG}`}>{item.issue}</TD>
+                <TD className={`text-muted-foreground ${COL_HIDE_LG}`}>{item.technician}</TD>
                 <TD>
                   <StatusBadge status={item.status} />
                 </TD>
                 <TD className={COL_HIDE_MD}>
                   <StatusBadge status={item.priority} />
                 </TD>
-                <TD className={`text-slate-500 ${COL_HIDE_MD}`}>{formatFaDate(item.receivedAt)}</TD>
-                <TD className={`text-slate-700 ${COL_HIDE_LG}`}>
+                <TD className={`text-muted-foreground ${COL_HIDE_MD}`}>
+                  {formatFaDate(item.receivedAt)}
+                </TD>
+                <TD className={`text-foreground ${COL_HIDE_LG}`}>
                   {item.estimatedCost > 0 ? formatToman(item.estimatedCost) : "—"}
+                </TD>
+                <TD>
+                  <EditButton
+                    onClick={() => {
+                      setEditing(item);
+                      setDialogOpen(true);
+                    }}
+                  />
                 </TD>
               </TR>
             ))}
           </TBody>
         </Table>
         {rows.length === 0 && (
-          <p className="py-12 text-center text-sm text-slate-400">پرونده‌ای یافت نشد.</p>
+          <p className="py-12 text-center text-sm text-faint">پرونده‌ای یافت نشد.</p>
         )}
       </Card>
-      {dialogOpen && <NewRepairDialog onClose={() => setDialogOpen(false)} />}
+      {dialogOpen && <RepairDialog record={editing} onClose={() => setDialogOpen(false)} />}
     </>
   );
 }
-function NewRepairDialog({ onClose }) {
-  const { repairs, addRepair } = useData();
+function RepairDialog({ record, onClose }) {
+  const { repairs, addRepair, updateRepair } = useData();
   const toast = useToast();
   const formId = useId();
-  const [draft, setDraft] = useState(() => ({
-    ticketCode: nextCode(
-      "REP",
-      repairs.map((r) => r.ticketCode),
-    ),
-    customer: "",
-    device: DEVICES[0],
-    issue: "",
-    technician: TECHNICIANS[0],
-    status: "در انتظار بررسی",
-    priority: "متوسط",
-    receivedAt: todayIso(),
-    estimatedCost: 0,
-  }));
+  const editing = Boolean(record);
+  const [draft, setDraft] = useState(() =>
+    record
+      ? { ...record }
+      : {
+          ticketCode: nextCode(
+            "REP",
+            repairs.map((r) => r.ticketCode),
+          ),
+          customer: "",
+          device: DEVICES[0],
+          issue: "",
+          technician: TECHNICIANS[0],
+          status: "در انتظار بررسی",
+          priority: "متوسط",
+          receivedAt: todayIso(),
+          estimatedCost: 0,
+        },
+  );
   const update = (key, value) => setDraft((prev) => ({ ...prev, [key]: value }));
   const handleSubmit = (event) => {
     event.preventDefault();
-    addRepair({ ...draft, estimatedCost: Math.max(0, draft.estimatedCost) });
-    toast.push(`پرونده ${draft.ticketCode} ثبت شد.`);
+    const payload = { ...draft, estimatedCost: Math.max(0, draft.estimatedCost) };
+    if (editing) {
+      updateRepair(record.id, payload);
+      toast.push(`پرونده ${draft.ticketCode} بروزرسانی شد.`);
+    } else {
+      addRepair(payload);
+      toast.push(`پرونده ${draft.ticketCode} ثبت شد.`);
+    }
     onClose();
   };
   return (
     <Modal
       size="lg"
-      title="پرونده تعمیر جدید"
-      description="پذیرش دستگاه و تخصیص تکنسین"
+      title={editing ? "ویرایش پرونده تعمیر" : "پرونده تعمیر جدید"}
+      description={
+        editing ? "وضعیت پرونده و اطلاعات آن را تغییر دهید" : "پذیرش دستگاه و تخصیص تکنسین"
+      }
       onClose={onClose}
       footer={
         <>
           <Button type="submit" form={formId}>
-            ثبت پرونده
+            {editing ? "ذخیره تغییرات" : "ثبت پرونده"}
           </Button>
           <Button type="button" variant="ghost" onClick={onClose}>
             انصراف
@@ -192,7 +232,7 @@ function NewRepairDialog({ onClose }) {
             readOnly
             dir="ltr"
             value={draft.ticketCode}
-            className="bg-slate-50 text-slate-500"
+            className="bg-muted text-muted-foreground"
           />
         </Field>
         <Field label="مشتری" required>
@@ -269,7 +309,7 @@ function NewRepairDialog({ onClose }) {
             min={0}
             step={100000}
             value={draft.estimatedCost}
-            onChange={(event) => update("estimatedCost", Number(event.target.value))}
+            onChange={(event) => update("estimatedCost", clampNumber(event.target.value, 0, 1e12))}
           />
         </Field>
       </form>

@@ -1,5 +1,5 @@
 import { useCallback, useId, useMemo, useState } from "react";
-import { Filter, Plus } from "lucide-react";
+import { Filter, Pencil, Plus } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { PageHeader, SearchInput } from "@/components/shared/PageHeader";
@@ -8,12 +8,13 @@ import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { StatusBadge } from "@/components/shared/Widgets";
 import { Progress } from "@/components/ui/Progress";
-import { COL_HIDE_MD, TD, TBody, TH, THead, TR, Table } from "@/components/ui/Table";
+import { COL_HIDE_MD, EditButton, TD, TBody, TH, THead, TR, Table } from "@/components/ui/Table";
 import { Avatar } from "@/components/ui/Avatar";
 import { useFilter } from "@/hooks/useFilter";
 import { useData } from "@/store/DataProvider";
 import { SALES_OWNERS } from "@/data/reference";
 import { formatFaDate, todayIso, toFaDigits } from "@/lib/format";
+import { clampNumber } from "@/lib/utils";
 const STAGES = ["جدید", "تماس اولیه", "ارائه پیشنهاد", "مذاکره", "قرارداد", "ناموفق"];
 const PRIORITIES = ["کم", "متوسط", "بالا", "فوری"];
 export function FollowUps() {
@@ -21,6 +22,7 @@ export function FollowUps() {
   const [query, setQuery] = useState("");
   const [stage, setStage] = useState("all");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState(null);
   const byStage = useMemo(
     () => (stage === "all" ? followUps : followUps.filter((item) => item.stage === stage)),
     [followUps, stage],
@@ -33,7 +35,12 @@ export function FollowUps() {
         title="روند پیگیری"
         description="مدیریت مراحل پیگیری مشتریان از تماس اولیه تا قرارداد"
         actions={
-          <Button onClick={() => setDialogOpen(true)}>
+          <Button
+            onClick={() => {
+              setEditing(null);
+              setDialogOpen(true);
+            }}
+          >
             <Plus className="size-4" />
             پیگیری جدید
           </Button>
@@ -48,7 +55,7 @@ export function FollowUps() {
             className="min-w-64 flex-1"
           />
           <div className="flex items-center gap-2">
-            <Filter className="size-4 text-slate-400" />
+            <Filter className="size-4 text-faint" />
             <Select
               value={stage}
               onChange={(event) => setStage(event.target.value)}
@@ -75,6 +82,7 @@ export function FollowUps() {
               <TH>اولویت</TH>
               <TH className={COL_HIDE_MD}>سررسید</TH>
               <TH className="w-40">پیشرفت</TH>
+              <TH className="w-12">عملیات</TH>
             </TR>
           </THead>
           <TBody>
@@ -83,18 +91,20 @@ export function FollowUps() {
                 <TD>
                   <div className="flex items-center gap-2.5">
                     <Avatar name={item.customer} className="size-8" />
-                    <span className="font-medium text-slate-800">{item.customer}</span>
+                    <span className="font-medium text-foreground">{item.customer}</span>
                   </div>
                 </TD>
-                <TD className="text-slate-500">{item.subject}</TD>
+                <TD className="text-muted-foreground">{item.subject}</TD>
                 <TD>
                   <StatusBadge status={item.stage} />
                 </TD>
-                <TD className={`text-slate-500 ${COL_HIDE_MD}`}>{item.owner}</TD>
+                <TD className={`text-muted-foreground ${COL_HIDE_MD}`}>{item.owner}</TD>
                 <TD>
                   <StatusBadge status={item.priority} />
                 </TD>
-                <TD className={`text-slate-500 ${COL_HIDE_MD}`}>{formatFaDate(item.dueDate)}</TD>
+                <TD className={`text-muted-foreground ${COL_HIDE_MD}`}>
+                  {formatFaDate(item.dueDate)}
+                </TD>
                 <TD>
                   <div className="flex items-center gap-2">
                     <Progress
@@ -102,50 +112,69 @@ export function FollowUps() {
                       tone={item.progress >= 80 ? "success" : "brand"}
                       className="w-24"
                     />
-                    <span className="text-xs text-slate-400">{toFaDigits(item.progress)}٪</span>
+                    <span className="text-xs text-faint">{toFaDigits(item.progress)}٪</span>
                   </div>
+                </TD>
+                <TD>
+                  <EditButton
+                    onClick={() => {
+                      setEditing(item);
+                      setDialogOpen(true);
+                    }}
+                  />
                 </TD>
               </TR>
             ))}
           </TBody>
         </Table>
         {rows.length === 0 && (
-          <p className="py-12 text-center text-sm text-slate-400">موردی یافت نشد.</p>
+          <p className="py-12 text-center text-sm text-faint">موردی یافت نشد.</p>
         )}
       </Card>
-      {dialogOpen && <NewFollowUpDialog onClose={() => setDialogOpen(false)} />}
+      {dialogOpen && <FollowUpDialog record={editing} onClose={() => setDialogOpen(false)} />}
     </>
   );
 }
-function NewFollowUpDialog({ onClose }) {
-  const { addFollowUp } = useData();
+function FollowUpDialog({ record, onClose }) {
+  const { addFollowUp, updateFollowUp } = useData();
   const toast = useToast();
   const formId = useId();
-  const [draft, setDraft] = useState({
-    customer: "",
-    subject: "",
-    stage: "جدید",
-    owner: SALES_OWNERS[0],
-    dueDate: todayIso(),
-    priority: "متوسط",
-    progress: 10,
-  });
+  const editing = Boolean(record);
+  const [draft, setDraft] = useState(() =>
+    record
+      ? { ...record }
+      : {
+          customer: "",
+          subject: "",
+          stage: "جدید",
+          owner: SALES_OWNERS[0],
+          dueDate: todayIso(),
+          priority: "متوسط",
+          progress: 10,
+        },
+  );
   const update = (key, value) => setDraft((prev) => ({ ...prev, [key]: value }));
   const handleSubmit = (event) => {
     event.preventDefault();
-    addFollowUp({ ...draft, progress: Math.min(100, Math.max(0, draft.progress)) });
-    toast.push(`پیگیری «${draft.subject}» ثبت شد.`);
+    const payload = { ...draft, progress: Math.min(100, Math.max(0, draft.progress)) };
+    if (editing) {
+      updateFollowUp(record.id, payload);
+      toast.push(`پیگیری «${draft.subject}» بروزرسانی شد.`);
+    } else {
+      addFollowUp(payload);
+      toast.push(`پیگیری «${draft.subject}» ثبت شد.`);
+    }
     onClose();
   };
   return (
     <Modal
-      title="پیگیری جدید"
-      description="یک روند پیگیری برای مشتری ثبت کنید"
+      title={editing ? "ویرایش پیگیری" : "پیگیری جدید"}
+      description={editing ? "اطلاعات پیگیری را تغییر دهید" : "یک روند پیگیری برای مشتری ثبت کنید"}
       onClose={onClose}
       footer={
         <>
           <Button type="submit" form={formId}>
-            ثبت پیگیری
+            {editing ? "ذخیره تغییرات" : "ثبت پیگیری"}
           </Button>
           <Button type="button" variant="ghost" onClick={onClose}>
             انصراف
@@ -216,7 +245,7 @@ function NewFollowUpDialog({ onClose }) {
             min={0}
             max={100}
             value={draft.progress}
-            onChange={(event) => update("progress", Number(event.target.value))}
+            onChange={(event) => update("progress", clampNumber(event.target.value, 0, 100))}
           />
         </Field>
       </form>

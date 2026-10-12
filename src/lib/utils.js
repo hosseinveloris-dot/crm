@@ -22,3 +22,15 @@ export function nextCode(prefix, existing) {
   }, 0);
   return `${prefix}-${highest + 1}`;
 }
+/** Keep only digits and cap the length — used for phone / national-id inputs. */
+export function digitsOnly(value, length) {
+  return String(value ?? "")
+    .replace(/\D/g, "")
+    .slice(0, length);
+}
+/** Clamp a number into `[min, max]`; empty or non-numeric input becomes `min`. */
+export function clampNumber(value, min, max) {
+  const parsed = Number(value);
+  if (value === "" || value == null || Number.isNaN(parsed)) return min;
+  return Math.min(max, Math.max(min, parsed));
+}

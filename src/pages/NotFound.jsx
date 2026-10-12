@@ -8,8 +8,8 @@ export function NotFound() {
         <Compass className="size-6" />
       </span>
       <div>
-        <p className="text-2xl font-bold text-slate-800">۴۰۴</p>
-        <p className="mt-1 text-sm text-slate-500">صفحه‌ای که دنبالش هستید پیدا نشد.</p>
+        <p className="text-2xl font-bold text-foreground">۴۰۴</p>
+        <p className="mt-1 text-sm text-muted-foreground">صفحه‌ای که دنبالش هستید پیدا نشد.</p>
       </div>
       <Link to="/" className={buttonClasses()}>
         بازگشت به داشبورد

@@ -1,6 +1,6 @@
 import { useCallback, useId, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Plus, Target, TrendingUp, Wallet } from "lucide-react";
+import { Pencil, Plus, Target, TrendingUp, Wallet } from "lucide-react";
 import { PageHeader, EmptyState, SearchInput } from "@/components/shared/PageHeader";
 import { StatCard, StatusBadge } from "@/components/shared/Widgets";
 import { Button } from "@/components/ui/Button";
@@ -9,7 +9,17 @@ import { Field, Input, Select } from "@/components/ui/Field";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/Tabs";
-import { TD, TBody, TH, THead, TR, Table, COL_HIDE_LG, COL_HIDE_MD } from "@/components/ui/Table";
+import {
+  COL_HIDE_LG,
+  COL_HIDE_MD,
+  EditButton,
+  TD,
+  TBody,
+  TH,
+  THead,
+  TR,
+  Table,
+} from "@/components/ui/Table";
 import { Avatar } from "@/components/ui/Avatar";
 import { Progress } from "@/components/ui/Progress";
 import { useFilter } from "@/hooks/useFilter";
@@ -17,6 +27,7 @@ import { useData } from "@/store/DataProvider";
 import { LEAD_SOURCES, SALES_OWNERS } from "@/data/reference";
 import { LEAD_STATUSES, MARKETING_CHANNELS } from "@/data/marketing";
 import { formatFaDate, formatFaNumber, formatToman, todayIso, toFaDigits } from "@/lib/format";
+import { clampNumber } from "@/lib/utils";
 const DEFAULT_CHANNEL = "kiln";
 function isChannel(value) {
   return MARKETING_CHANNELS.some((channel) => channel.id === value);
@@ -27,6 +38,7 @@ export function Marketing() {
   const { leads } = useData();
   const [query, setQuery] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState(null);
   const channel = isChannel(param) ? param : DEFAULT_CHANNEL;
   const meta = MARKETING_CHANNELS.find((item) => item.id === channel);
   const byChannel = useMemo(
@@ -46,7 +58,12 @@ export function Marketing() {
         title="بازاریابی"
         description="مدیریت سرنخ‌ها و فرصت‌های فروش به تفکیک کانال"
         actions={
-          <Button onClick={() => setDialogOpen(true)}>
+          <Button
+            onClick={() => {
+              setEditing(null);
+              setDialogOpen(true);
+            }}
+          >
             <Plus className="size-4" />
             ثبت سرنخ
           </Button>
@@ -61,7 +78,7 @@ export function Marketing() {
           ))}
         </TabsList>
       </Tabs>
-      <p className="text-sm text-slate-500">{meta.description}</p>
+      <p className="text-sm text-muted-foreground">{meta.description}</p>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard
           title="تعداد سرنخ‌ها"
@@ -103,6 +120,7 @@ export function Marketing() {
                 <TH className="w-40">امتیاز</TH>
                 <TH className={COL_HIDE_MD}>ارزش تخمینی</TH>
                 <TH className={COL_HIDE_LG}>تاریخ ثبت</TH>
+                <TH className="w-12">عملیات</TH>
               </TR>
             </THead>
             <TBody>
@@ -111,14 +129,14 @@ export function Marketing() {
                   <TD>
                     <div className="flex items-center gap-2.5">
                       <Avatar name={lead.customer} className="size-8" />
-                      <span className="font-medium text-slate-800">{lead.customer}</span>
+                      <span className="font-medium text-foreground">{lead.customer}</span>
                     </div>
                   </TD>
-                  <TD className={`text-slate-500 ${COL_HIDE_MD}`}>{lead.source}</TD>
+                  <TD className={`text-muted-foreground ${COL_HIDE_MD}`}>{lead.source}</TD>
                   <TD>
                     <StatusBadge status={lead.status} />
                   </TD>
-                  <TD className={`text-slate-500 ${COL_HIDE_LG}`}>{lead.owner}</TD>
+                  <TD className={`text-muted-foreground ${COL_HIDE_LG}`}>{lead.owner}</TD>
                   <TD>
                     <div className="flex items-center gap-2">
                       <Progress
@@ -126,14 +144,22 @@ export function Marketing() {
                         tone={lead.score >= 70 ? "success" : "brand"}
                         className="w-24"
                       />
-                      <span className="text-xs text-slate-400">{toFaDigits(lead.score)}</span>
+                      <span className="text-xs text-faint">{toFaDigits(lead.score)}</span>
                     </div>
                   </TD>
-                  <TD className={`text-slate-700 ${COL_HIDE_MD}`}>
+                  <TD className={`text-foreground ${COL_HIDE_MD}`}>
                     {lead.value > 0 ? formatToman(lead.value) : "—"}
                   </TD>
-                  <TD className={`text-slate-500 ${COL_HIDE_LG}`}>
+                  <TD className={`text-muted-foreground ${COL_HIDE_LG}`}>
                     {formatFaDate(lead.createdAt)}
+                  </TD>
+                  <TD>
+                    <EditButton
+                      onClick={() => {
+                        setEditing(lead);
+                        setDialogOpen(true);
+                      }}
+                    />
                   </TD>
                 </TR>
               ))}
@@ -145,45 +171,58 @@ export function Marketing() {
           </CardBody>
         )}
       </Card>
-      {dialogOpen && <NewLeadDialog channel={channel} onClose={() => setDialogOpen(false)} />}
+      {dialogOpen && (
+        <LeadDialog channel={channel} record={editing} onClose={() => setDialogOpen(false)} />
+      )}
     </>
   );
 }
-function NewLeadDialog({ channel, onClose }) {
-  const { addLead } = useData();
+function LeadDialog({ channel, record, onClose }) {
+  const { addLead, updateLead } = useData();
   const toast = useToast();
   const formId = useId();
   const meta = MARKETING_CHANNELS.find((item) => item.id === channel);
-  const [draft, setDraft] = useState({
-    customer: "",
-    source: LEAD_SOURCES[0],
-    status: "سرنخ",
-    score: 50,
-    owner: SALES_OWNERS[0],
-    value: 0,
-    createdAt: todayIso(),
-  });
+  const editing = Boolean(record);
+  const [draft, setDraft] = useState(() =>
+    record
+      ? { ...record }
+      : {
+          customer: "",
+          source: LEAD_SOURCES[0],
+          status: "سرنخ",
+          score: 50,
+          owner: SALES_OWNERS[0],
+          value: 0,
+          createdAt: todayIso(),
+        },
+  );
   const update = (key, value) => setDraft((prev) => ({ ...prev, [key]: value }));
   const handleSubmit = (event) => {
     event.preventDefault();
-    addLead({
+    const payload = {
       ...draft,
       channel,
       score: Math.min(100, Math.max(0, draft.score)),
       value: Math.max(0, draft.value),
-    });
-    toast.push(`سرنخ «${draft.customer}» در کانال ${meta.title} ثبت شد.`);
+    };
+    if (editing) {
+      updateLead(record.id, payload);
+      toast.push(`سرنخ «${draft.customer}» بروزرسانی شد.`);
+    } else {
+      addLead(payload);
+      toast.push(`سرنخ «${draft.customer}» در کانال ${meta.title} ثبت شد.`);
+    }
     onClose();
   };
   return (
     <Modal
-      title="ثبت سرنخ"
-      description={`کانال «${meta.title}»`}
+      title={editing ? "ویرایش سرنخ" : "ثبت سرنخ"}
+      description={editing ? "اطلاعات سرنخ را تغییر دهید" : `کانال «${meta.title}»`}
       onClose={onClose}
       footer={
         <>
           <Button type="submit" form={formId}>
-            ثبت سرنخ
+            {editing ? "ذخیره تغییرات" : "ثبت سرنخ"}
           </Button>
           <Button type="button" variant="ghost" onClick={onClose}>
             انصراف
@@ -243,7 +282,7 @@ function NewLeadDialog({ channel, onClose }) {
             min={0}
             max={100}
             value={draft.score}
-            onChange={(event) => update("score", Number(event.target.value))}
+            onChange={(event) => update("score", clampNumber(event.target.value, 0, 100))}
           />
         </Field>
         <Field label="ارزش تخمینی" hint="به تومان">
@@ -252,7 +291,7 @@ function NewLeadDialog({ channel, onClose }) {
             min={0}
             step={1000000}
             value={draft.value}
-            onChange={(event) => update("value", Number(event.target.value))}
+            onChange={(event) => update("value", clampNumber(event.target.value, 0, 1e12))}
           />
         </Field>
       </form>

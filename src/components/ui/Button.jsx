@@ -3,10 +3,10 @@ import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 const VARIANTS = {
   primary: "bg-brand text-brand-foreground hover:brightness-110 shadow-sm",
-  secondary: "bg-slate-100 text-slate-800 hover:bg-slate-200",
-  ghost: "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+  secondary: "bg-muted text-foreground hover:bg-slate-200 dark:hover:bg-white/10",
+  ghost: "text-muted-foreground hover:bg-muted hover:text-foreground",
   danger: "bg-danger text-white hover:brightness-110 shadow-sm",
-  outline: "border border-border bg-surface text-slate-700 hover:bg-slate-50",
+  outline: "border border-border bg-surface text-foreground hover:bg-muted",
 };
 const SIZES = {
   sm: "h-8 px-3 text-xs gap-1.5",

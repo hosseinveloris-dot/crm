@@ -25,7 +25,7 @@ export function TabsList({ children, className }) {
     <div
       role="tablist"
       className={cn(
-        "inline-flex max-w-full flex-wrap items-center gap-1 rounded-lg bg-slate-100 p-1",
+        "inline-flex max-w-full flex-wrap items-center gap-1 rounded-lg bg-muted p-1",
         className,
       )}
     >
@@ -45,7 +45,9 @@ export function TabsTrigger({ value, children }) {
       onClick={() => setValue(value)}
       className={cn(
         "shrink-0 whitespace-nowrap rounded-md px-3.5 py-1.5 text-sm font-medium transition sm:px-4",
-        selected ? "bg-surface text-brand shadow-sm" : "text-slate-500 hover:text-slate-800",
+        selected
+          ? "bg-surface text-brand shadow-sm"
+          : "text-muted-foreground hover:text-foreground",
       )}
     >
       {children}

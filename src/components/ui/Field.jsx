@@ -1,13 +1,17 @@
 import { cn } from "@/lib/utils";
-export function Field({ label, hint, required, children, className }) {
+export function Field({ label, hint, error, required, children, className }) {
   return (
     <label className={cn("block space-y-1.5", className)}>
-      <span className="flex items-center gap-1 text-xs font-medium text-slate-700">
+      <span className="flex items-center gap-1 text-xs font-medium text-foreground">
         {label}
         {required && <span className="text-danger">*</span>}
       </span>
       {children}
-      {hint && <span className="block text-[11px] text-slate-400">{hint}</span>}
+      {error ? (
+        <span className="block text-[11px] text-danger">{error}</span>
+      ) : (
+        hint && <span className="block text-[11px] text-faint">{hint}</span>
+      )}
     </label>
   );
 }

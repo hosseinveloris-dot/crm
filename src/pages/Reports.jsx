@@ -55,14 +55,14 @@ export function Reports() {
               ))}
             </TabsList>
           </Tabs>
-          <span className="text-xs text-slate-400">{toFaDigits(rows.length)} گزارش در دسترس</span>
+          <span className="text-xs text-faint">{toFaDigits(rows.length)} گزارش در دسترس</span>
         </div>
       </Card>
       <Card>
         <CardBody>
           <div className="mb-4 flex items-center gap-2">
             <BarChart3 className="size-4 text-brand" />
-            <h3 className="text-sm font-semibold text-slate-800">روند فروش — نمای کلی</h3>
+            <h3 className="text-sm font-semibold text-foreground">روند فروش — نمای کلی</h3>
           </div>
           <BarChart
             data={salesTrend.map((point) => ({ label: point.month, value: point.sales }))}
@@ -80,8 +80,8 @@ export function Reports() {
                     <Icon className="size-5" />
                   </span>
                   <div>
-                    <h3 className="text-sm font-semibold text-slate-800">{report.title}</h3>
-                    <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                    <h3 className="text-sm font-semibold text-foreground">{report.title}</h3>
+                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                       {report.description}
                     </p>
                   </div>
@@ -92,7 +92,7 @@ export function Reports() {
                   <Badge tone="brand">{report.category}</Badge>
                   <Badge tone="neutral">{report.format}</Badge>
                 </div>
-                <span className="text-[11px] text-slate-400">{formatFaDate(report.updatedAt)}</span>
+                <span className="text-[11px] text-faint">{formatFaDate(report.updatedAt)}</span>
               </div>
             </Card>
           );

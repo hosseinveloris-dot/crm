@@ -42,16 +42,16 @@ export function Modal({ title, description, onClose, footer, size = "md", childr
       >
         <header className="flex items-start justify-between gap-3 border-b border-border px-4 py-3.5 sm:px-5">
           <div className="min-w-0">
-            <h2 id={titleId} className="text-sm font-bold text-slate-800">
+            <h2 id={titleId} className="text-sm font-bold text-foreground">
               {title}
             </h2>
-            {description && <p className="mt-0.5 text-xs text-slate-500">{description}</p>}
+            {description && <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>}
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="بستن"
-            className="grid size-8 shrink-0 place-items-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+            className="grid size-8 shrink-0 place-items-center rounded-md text-faint transition hover:bg-muted hover:text-foreground"
           >
             <X className="size-4" />
           </button>

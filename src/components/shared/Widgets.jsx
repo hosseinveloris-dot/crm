@@ -52,9 +52,9 @@ export function StatusBadge({ status }) {
 /* -------------------------------------------------------------------------- */
 const KPI_TONES = {
   brand: "bg-brand-soft text-brand",
-  success: "bg-emerald-50 text-emerald-600",
-  warning: "bg-amber-50 text-amber-600",
-  info: "bg-sky-50 text-sky-600",
+  success: "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300",
+  warning: "bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300",
+  info: "bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300",
 };
 export function StatCard({ title, value, hint, change, icon: Icon, tone = "brand" }) {
   const up = (change ?? 0) >= 0;
@@ -62,8 +62,8 @@ export function StatCard({ title, value, hint, change, icon: Icon, tone = "brand
     <div className="card p-4 sm:p-5">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-xs font-medium text-slate-500">{title}</p>
-          <p className="mt-2 truncate text-lg font-bold text-slate-800 sm:text-xl">{value}</p>
+          <p className="text-xs font-medium text-muted-foreground">{title}</p>
+          <p className="mt-2 truncate text-lg font-bold text-foreground sm:text-xl">{value}</p>
         </div>
         <span
           className={cn(
@@ -76,11 +76,16 @@ export function StatCard({ title, value, hint, change, icon: Icon, tone = "brand
       </div>
       <div className="mt-3 flex items-center gap-2 text-xs">
         {change !== undefined && (
-          <span className={cn("font-semibold", up ? "text-emerald-600" : "text-danger")}>
+          <span
+            className={cn(
+              "font-semibold",
+              up ? "text-emerald-600 dark:text-emerald-400" : "text-danger",
+            )}
+          >
             {up ? "▲" : "▼"} {toFaDigits(Math.abs(change))}٪
           </span>
         )}
-        {hint && <span className="text-slate-400">{hint}</span>}
+        {hint && <span className="text-faint">{hint}</span>}
       </div>
     </div>
   );
@@ -101,7 +106,7 @@ export function BarChart({ data, className }) {
               title={`${item.label}: ${toFaDigits(item.value)}`}
             />
           </div>
-          <span className="text-[11px] text-slate-400">{item.label}</span>
+          <span className="text-[11px] text-faint">{item.label}</span>
         </div>
       ))}
     </div>
@@ -116,13 +121,13 @@ export function ChannelBreakdown({ items }) {
       {items.map((item) => (
         <div key={item.label} className="space-y-1.5">
           <div className="flex items-center justify-between text-xs">
-            <span className="font-medium text-slate-600">{item.label}</span>
-            <span className="text-slate-400">{toFaDigits(item.value)}٪</span>
+            <span className="font-medium text-muted-foreground">{item.label}</span>
+            <span className="text-faint">{toFaDigits(item.value)}٪</span>
           </div>
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
             <div
-              className="h-full rounded-full transition-all"
-              style={{ width: `${item.value}%`, backgroundColor: item.tone }}
+              className={cn("h-full rounded-full transition-all", item.tone)}
+              style={{ width: `${item.value}%` }}
             />
           </div>
         </div>

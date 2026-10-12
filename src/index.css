@@ -11,6 +11,9 @@
 
     /* Text & lines */
     --foreground: 205 70% 12%;
+    --muted-foreground: 215 16% 47%;
+    --faint: 215 20% 65%;
+    --muted: 210 40% 96%;
     --border: 204 30% 91%;
     --input: 204 30% 88%;
     --ring: 186 85% 34%;
@@ -41,6 +44,9 @@
     --surface-foreground: 200 40% 96%;
 
     --foreground: 200 40% 96%;
+    --muted-foreground: 210 20% 74%;
+    --faint: 210 15% 58%;
+    --muted: 205 30% 20%;
     --border: 205 30% 22%;
     --input: 205 30% 22%;
     --ring: 186 85% 45%;
@@ -90,7 +96,7 @@
 
   .input-base {
     @apply h-10 w-full rounded-md border border-input bg-surface px-3 text-sm
-           outline-none transition placeholder:text-slate-400
+           outline-none transition placeholder:text-faint
            focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:opacity-60;
   }
 

@@ -69,7 +69,7 @@ export function Dashboard() {
           <CardHeader>
             <div>
               <CardTitle>روند فروش و سرنخ‌ها</CardTitle>
-              <p className="mt-1 text-xs text-slate-500">شش ماه گذشته (میلیارد تومان)</p>
+              <p className="mt-1 text-xs text-muted-foreground">شش ماه گذشته (میلیارد تومان)</p>
             </div>
             <Link
               to="/reports"
@@ -91,7 +91,7 @@ export function Dashboard() {
             <ChannelBreakdown items={channelMix} />
             <div className="rounded-lg bg-brand-soft p-4">
               <p className="text-xs font-semibold text-brand">بیشترین بازدهی</p>
-              <p className="mt-1 text-sm text-slate-600">
+              <p className="mt-1 text-sm text-muted-foreground">
                 کانال «کوره» با ۴۲٪ سهم، بیشترین فرصت فروش را ایجاد کرده است.
               </p>
             </div>
@@ -118,15 +118,15 @@ export function Dashboard() {
             <TBody>
               {topFollowUps.map((item) => (
                 <TR key={item.id}>
-                  <TD className="font-medium text-slate-800">{item.customer}</TD>
-                  <TD className={`text-slate-500 ${COL_HIDE_MD}`}>{item.subject}</TD>
+                  <TD className="font-medium text-foreground">{item.customer}</TD>
+                  <TD className={`text-muted-foreground ${COL_HIDE_MD}`}>{item.subject}</TD>
                   <TD>
                     <StatusBadge status={item.stage} />
                   </TD>
                   <TD>
                     <div className="flex items-center gap-2">
                       <Progress value={item.progress} className="w-24" />
-                      <span className="text-xs text-slate-400">{toFaDigits(item.progress)}٪</span>
+                      <span className="text-xs text-faint">{toFaDigits(item.progress)}٪</span>
                     </div>
                   </TD>
                 </TR>
@@ -146,9 +146,9 @@ export function Dashboard() {
                     className={cn("mt-1.5 size-2 shrink-0 rounded-full", TONE_DOT[activity.tone])}
                   />
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-slate-700">{activity.title}</p>
-                    <p className="truncate text-xs text-slate-400">{activity.description}</p>
-                    <p className="mt-0.5 text-[11px] text-slate-400">{activity.time}</p>
+                    <p className="text-sm font-medium text-foreground">{activity.title}</p>
+                    <p className="truncate text-xs text-faint">{activity.description}</p>
+                    <p className="mt-0.5 text-[11px] text-faint">{activity.time}</p>
                   </div>
                 </li>
               ))}

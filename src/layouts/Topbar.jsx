@@ -42,33 +42,33 @@ export function Topbar({ onOpenSidebar }) {
       <button
         type="button"
         onClick={onOpenSidebar}
-        className="grid size-9 place-items-center rounded-md text-slate-500 hover:bg-slate-100 lg:hidden"
+        className="grid size-9 place-items-center rounded-md text-muted-foreground hover:bg-muted lg:hidden"
         aria-label="باز کردن منو"
       >
         <Menu className="size-5" />
       </button>
-      <span className="truncate text-sm font-semibold text-slate-700 md:hidden">
+      <span className="truncate text-sm font-semibold text-foreground md:hidden">
         {TITLES[pathname] ?? "سامانه CRM"}
       </span>
-      <nav className="hidden items-center gap-1.5 text-xs text-slate-400 md:flex">
+      <nav className="hidden items-center gap-1.5 text-xs text-faint md:flex">
         {crumbs.map((crumb, index) => (
           <span key={`${crumb.label}-${index}`} className="flex items-center gap-1.5">
             {index > 0 && <ChevronLeft className="size-3.5" />}
-            <span className={cn(index === crumbs.length - 1 && "font-medium text-slate-700")}>
+            <span className={cn(index === crumbs.length - 1 && "font-medium text-foreground")}>
               {crumb.label}
             </span>
           </span>
         ))}
       </nav>
       <div className="relative mr-auto hidden w-72 md:block">
-        <Search className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+        <Search className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-faint" />
         <input className="input-base pr-9" placeholder="جستجوی مشتری، سفارش یا تیکت..." />
       </div>
       <div className="mr-auto flex items-center gap-0.5 sm:gap-1 md:mr-0">
         <button
           type="button"
           onClick={toggle}
-          className="grid size-9 place-items-center rounded-md text-slate-500 hover:bg-slate-100"
+          className="grid size-9 place-items-center rounded-md text-muted-foreground hover:bg-muted"
           aria-label="تغییر تم"
           title={theme === "dark" ? "حالت روشن" : "حالت تاریک"}
         >
@@ -76,7 +76,7 @@ export function Topbar({ onOpenSidebar }) {
         </button>
         <button
           type="button"
-          className="relative grid size-9 place-items-center rounded-md text-slate-500 hover:bg-slate-100"
+          className="relative grid size-9 place-items-center rounded-md text-muted-foreground hover:bg-muted"
           aria-label="اعلان‌ها"
         >
           <Bell className="size-5" />
@@ -89,8 +89,8 @@ export function Topbar({ onOpenSidebar }) {
         <div className="mr-1 hidden items-center gap-2 rounded-md px-1.5 py-1 sm:flex">
           <Avatar name="مریم احمدی" className="size-8" />
           <div className="leading-tight">
-            <p className="text-xs font-semibold text-slate-700">مریم احمدی</p>
-            <p className="text-[11px] text-slate-400">کارشناس فروش</p>
+            <p className="text-xs font-semibold text-foreground">مریم احمدی</p>
+            <p className="text-[11px] text-faint">کارشناس فروش</p>
           </div>
         </div>
       </div>

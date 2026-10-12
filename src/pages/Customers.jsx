@@ -70,22 +70,22 @@ export function Customers() {
           <TBody>
             {rows.map((item) => (
               <TR key={item.id}>
-                <TD className={`font-medium text-slate-800 ${COL_HIDE_MD}`}>{item.code}</TD>
+                <TD className={`font-medium text-foreground ${COL_HIDE_MD}`}>{item.code}</TD>
                 <TD>
                   <div className="flex items-center gap-2.5">
                     <Avatar name={item.fullName} className="size-8" />
-                    <span className="text-slate-700">{item.fullName}</span>
+                    <span className="text-foreground">{item.fullName}</span>
                   </div>
                 </TD>
-                <TD className={`text-slate-500 ${COL_HIDE_LG}`}>{item.company ?? "—"}</TD>
-                <TD className="text-slate-500">{item.phone}</TD>
-                <TD className={`text-slate-500 ${COL_HIDE_MD}`}>{item.city}</TD>
-                <TD className={`text-slate-500 ${COL_HIDE_LG}`}>{item.type}</TD>
+                <TD className={`text-muted-foreground ${COL_HIDE_LG}`}>{item.company ?? "—"}</TD>
+                <TD className="text-muted-foreground">{item.phone}</TD>
+                <TD className={`text-muted-foreground ${COL_HIDE_MD}`}>{item.city}</TD>
+                <TD className={`text-muted-foreground ${COL_HIDE_LG}`}>{item.type}</TD>
                 <TD>
                   <StatusBadge status={item.status} />
                 </TD>
-                <TD className={`text-slate-500 ${COL_HIDE_LG}`}>{item.owner}</TD>
-                <TD className={`text-slate-500 ${COL_HIDE_MD}`}>
+                <TD className={`text-muted-foreground ${COL_HIDE_LG}`}>{item.owner}</TD>
+                <TD className={`text-muted-foreground ${COL_HIDE_MD}`}>
                   {formatFaDate(item.registeredAt)}
                 </TD>
               </TR>
@@ -93,7 +93,7 @@ export function Customers() {
           </TBody>
         </Table>
         {rows.length === 0 && (
-          <p className="py-12 text-center text-sm text-slate-400">مشتری‌ای یافت نشد.</p>
+          <p className="py-12 text-center text-sm text-faint">مشتری‌ای یافت نشد.</p>
         )}
       </Card>
     </>

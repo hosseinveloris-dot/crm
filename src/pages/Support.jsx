@@ -1,5 +1,5 @@
 import { useCallback, useId, useMemo, useState } from "react";
-import { CheckCircle2, Clock, MessageSquare, Plus } from "lucide-react";
+import { CheckCircle2, Clock, MessageSquare, Pencil, Plus } from "lucide-react";
 import { PageHeader, SearchInput } from "@/components/shared/PageHeader";
 import { StatCard, StatusBadge } from "@/components/shared/Widgets";
 import { Button } from "@/components/ui/Button";
@@ -8,7 +8,17 @@ import { Field, Input, Select } from "@/components/ui/Field";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/Tabs";
-import { COL_HIDE_LG, COL_HIDE_MD, TD, TBody, TH, THead, TR, Table } from "@/components/ui/Table";
+import {
+  COL_HIDE_LG,
+  COL_HIDE_MD,
+  EditButton,
+  TD,
+  TBody,
+  TH,
+  THead,
+  TR,
+  Table,
+} from "@/components/ui/Table";
 import { Avatar } from "@/components/ui/Avatar";
 import { useFilter } from "@/hooks/useFilter";
 import { useData } from "@/store/DataProvider";
@@ -24,6 +34,7 @@ export function Support() {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("همه");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState(null);
   const byStatus = useMemo(
     () => (status === "همه" ? tickets : tickets.filter((t) => t.status === status)),
     [tickets, status],
@@ -42,7 +53,12 @@ export function Support() {
         title="پشتیبانی"
         description="مدیریت تیکت‌های مشتریان، اولویت‌بندی و سنجش رضایت"
         actions={
-          <Button onClick={() => setDialogOpen(true)}>
+          <Button
+            onClick={() => {
+              setEditing(null);
+              setDialogOpen(true);
+            }}
+          >
             <Plus className="size-4" />
             تیکت جدید
           </Button>
@@ -94,73 +110,94 @@ export function Support() {
               <TH>وضعیت</TH>
               <TH className={COL_HIDE_LG}>کارشناس</TH>
               <TH className={COL_HIDE_MD}>تاریخ</TH>
+              <TH className="w-12">عملیات</TH>
             </TR>
           </THead>
           <TBody>
             {rows.map((item) => (
               <TR key={item.id}>
-                <TD className="font-medium text-slate-800">{item.code}</TD>
+                <TD className="font-medium text-foreground">{item.code}</TD>
                 <TD>
                   <div className="flex items-center gap-2.5">
                     <Avatar name={item.customer} className="size-8" />
-                    <span className="text-slate-700">{item.customer}</span>
+                    <span className="text-foreground">{item.customer}</span>
                   </div>
                 </TD>
-                <TD className={`text-slate-500 ${COL_HIDE_MD}`}>{item.subject}</TD>
-                <TD className={`text-slate-500 ${COL_HIDE_LG}`}>{item.channel}</TD>
+                <TD className={`text-muted-foreground ${COL_HIDE_MD}`}>{item.subject}</TD>
+                <TD className={`text-muted-foreground ${COL_HIDE_LG}`}>{item.channel}</TD>
                 <TD className={COL_HIDE_MD}>
                   <StatusBadge status={item.priority} />
                 </TD>
                 <TD>
                   <StatusBadge status={item.status} />
                 </TD>
-                <TD className={`text-slate-500 ${COL_HIDE_LG}`}>{item.agent}</TD>
-                <TD className={`text-slate-500 ${COL_HIDE_MD}`}>{formatFaDate(item.createdAt)}</TD>
+                <TD className={`text-muted-foreground ${COL_HIDE_LG}`}>{item.agent}</TD>
+                <TD className={`text-muted-foreground ${COL_HIDE_MD}`}>
+                  {formatFaDate(item.createdAt)}
+                </TD>
+                <TD>
+                  <EditButton
+                    onClick={() => {
+                      setEditing(item);
+                      setDialogOpen(true);
+                    }}
+                  />
+                </TD>
               </TR>
             ))}
           </TBody>
         </Table>
         {rows.length === 0 && (
-          <p className="py-12 text-center text-sm text-slate-400">تیکتی یافت نشد.</p>
+          <p className="py-12 text-center text-sm text-faint">تیکتی یافت نشد.</p>
         )}
       </Card>
-      {dialogOpen && <NewTicketDialog onClose={() => setDialogOpen(false)} />}
+      {dialogOpen && <TicketDialog record={editing} onClose={() => setDialogOpen(false)} />}
     </>
   );
 }
-function NewTicketDialog({ onClose }) {
-  const { tickets, addTicket } = useData();
+function TicketDialog({ record, onClose }) {
+  const { tickets, addTicket, updateTicket } = useData();
   const toast = useToast();
   const formId = useId();
-  const [draft, setDraft] = useState(() => ({
-    code: nextCode(
-      "SUP",
-      tickets.map((t) => t.code),
-    ),
-    customer: "",
-    subject: "",
-    channel: "تلفن",
-    priority: "متوسط",
-    status: "باز",
-    agent: SALES_OWNERS[0],
-    createdAt: todayIso(),
-  }));
+  const editing = Boolean(record);
+  const [draft, setDraft] = useState(() =>
+    record
+      ? { ...record }
+      : {
+          code: nextCode(
+            "SUP",
+            tickets.map((t) => t.code),
+          ),
+          customer: "",
+          subject: "",
+          channel: "تلفن",
+          priority: "متوسط",
+          status: "باز",
+          agent: SALES_OWNERS[0],
+          createdAt: todayIso(),
+        },
+  );
   const update = (key, value) => setDraft((prev) => ({ ...prev, [key]: value }));
   const handleSubmit = (event) => {
     event.preventDefault();
-    addTicket(draft);
-    toast.push(`تیکت ${draft.code} ثبت شد.`);
+    if (editing) {
+      updateTicket(record.id, draft);
+      toast.push(`تیکت ${draft.code} بروزرسانی شد.`);
+    } else {
+      addTicket(draft);
+      toast.push(`تیکت ${draft.code} ثبت شد.`);
+    }
     onClose();
   };
   return (
     <Modal
-      title="تیکت جدید"
-      description="ثبت درخواست پشتیبانی مشتری"
+      title={editing ? "ویرایش تیکت" : "تیکت جدید"}
+      description={editing ? "وضعیت و اطلاعات تیکت را تغییر دهید" : "ثبت درخواست پشتیبانی مشتری"}
       onClose={onClose}
       footer={
         <>
           <Button type="submit" form={formId}>
-            ثبت تیکت
+            {editing ? "ذخیره تغییرات" : "ثبت تیکت"}
           </Button>
           <Button type="button" variant="ghost" onClick={onClose}>
             انصراف
@@ -170,7 +207,7 @@ function NewTicketDialog({ onClose }) {
     >
       <form id={formId} onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="کد تیکت" hint="به‌صورت خودکار تولید می‌شود">
-          <Input readOnly dir="ltr" value={draft.code} className="bg-slate-50 text-slate-500" />
+          <Input readOnly dir="ltr" value={draft.code} className="bg-muted text-muted-foreground" />
         </Field>
         <Field label="مشتری" required>
           <Input
